@@ -1,32 +1,41 @@
-import { useState } from 'react';
-import reactLogo from './assets/react.svg';
+import { useEffect, useRef } from 'react';
+import * as FFmpeg from '@ffmpeg/ffmpeg';
 import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0);
+  const uploaderRef = useRef<HTMLInputElement>(null);
+  const playerRef = useRef<HTMLVideoElement>(null);
+  const { createFFmpeg, fetchFile } = FFmpeg;
+
+  const ffmpeg = createFFmpeg({ log: true });
+
+  const transcode = async ({ target: { files } }: any) => {
+    if (!playerRef.current) return;
+
+    const { name } = files[0];
+    await ffmpeg.load();
+    ffmpeg.FS('writeFile', name, await fetchFile(files[0]));
+    await ffmpeg.run('-i', name, 'output.mp4');
+    const data = ffmpeg.FS('readFile', 'output.mp4');
+    playerRef.current.src = URL.createObjectURL(
+      new Blob([data.buffer], { type: 'video/mp4' }),
+    );
+  };
+
+  useEffect(() => {
+    uploaderRef.current?.addEventListener('change', transcode);
+
+    return () => {
+      uploaderRef.current?.removeEventListener('change', transcode);
+    };
+  }, []);
 
   return (
     <div className='App'>
+      <video id='player' controls ref={playerRef} />
       <div>
-        <a href='https://vitejs.dev' target='_blank' rel='noreferrer'>
-          <img src='/vite.svg' className='logo' alt='Vite logo' />
-        </a>
-        <a href='https://reactjs.org' target='_blank' rel='noreferrer'>
-          <img src={reactLogo} className='logo react' alt='React logo' />
-        </a>
+        <input type='file' id='uploader' ref={uploaderRef} />
       </div>
-      <h1>Vite + React</h1>
-      <div className='card'>
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className='read-the-docs'>
-        Click on the Vite and React logos to learn more
-      </p>
     </div>
   );
 }
