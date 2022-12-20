@@ -1360,6 +1360,11 @@
   resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.3.13.tgz#da4bfd73f49bd541d28920ab0e2bf0ee80f71c91"
   integrity sha512-21cFJr9z3g5dW8B0CVI9g2O9beqaThGQ6ZFBqHfwhzLDKUxaqTIy3vnfah/UPkfOiF2pLq+tGz+W8RyCskuslw==
 
+"@types/wicg-file-system-access@^2020.9.5":
+  version "2020.9.5"
+  resolved "https://registry.yarnpkg.com/@types/wicg-file-system-access/-/wicg-file-system-access-2020.9.5.tgz#4a0c8f3d1ed101525f329e86c978f7735404474f"
+  integrity sha512-UYK244awtmcUYQfs7FR8710MJcefL2WvkyHMjA8yJzxd1mo0Gfn88sRZ1Bls7hiUhA2w7ne1gpJ9T5g3G0wOyA==
+
 "@typescript-eslint/eslint-plugin@^5.42.1":
   version "5.42.1"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-5.42.1.tgz#696b9cc21dfd4749c1c8ad1307f76a36a00aa0e3"

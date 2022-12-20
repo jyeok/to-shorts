@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Converter } from './components/Converter';
+import { FileInput } from './components/FileInput';
 import { getFFMpeg } from './utils/FFMpeg';
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
 
   return (
     <div className='App'>
-      <Converter />
+      <FileInput />
     </div>
   );
 }
