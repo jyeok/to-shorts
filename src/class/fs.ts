@@ -23,6 +23,8 @@ export class BrowserFileSystem {
   public open = async (options?: OpenFilePickerOptions) => {
     try {
       this.fileHandles = await window.showOpenFilePicker(options);
+
+      return this.fileHandles;
     } catch (error) {
       console.error(error);
     }

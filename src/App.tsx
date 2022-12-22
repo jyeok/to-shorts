@@ -1,16 +1,11 @@
-import { useEffect } from 'react';
-import { FileInput } from './components/FileInput';
-import { getFFMpeg } from './utils/FFMpeg';
+import { Flex } from '@chakra-ui/react';
+import { Converter } from './components/Converter';
 
 function App() {
-  useEffect(() => {
-    getFFMpeg();
-  }, []);
-
   return (
-    <div className='App'>
-      <FileInput />
-    </div>
+    <Flex pt={20} justifyContent='center' direction='column' align='center'>
+      <Converter />
+    </Flex>
   );
 }
 
