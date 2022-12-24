@@ -30,6 +30,24 @@ export class BrowserFileSystem {
     }
   };
 
+  public static save = async (
+    source: FileSystemWriteChunkType,
+    options?: SaveFilePickerOptions,
+  ) => {
+    try {
+      const downloadHandle = await window.showSaveFilePicker(options);
+      const writeStream = await downloadHandle.createWritable();
+
+      await writeStream.write(source);
+      await writeStream.close();
+
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
+
   public close = () => {
     this.fileHandles = null;
   };

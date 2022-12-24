@@ -26,7 +26,7 @@ export const FileInput = forwardRef<FileInputRef, FileInputProps>(
       }
     };
 
-    return <Button onClick={handleOpen}>파일 선택</Button>;
+    return <Button onClick={handleOpen}>Select File</Button>;
   },
 );
 

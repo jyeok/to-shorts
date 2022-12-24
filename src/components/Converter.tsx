@@ -1,14 +1,17 @@
 import { Button, Flex, Text } from '@chakra-ui/react';
 import { useEffect, useRef, useState } from 'react';
-import { getFFMpeg, scaleVideo, transcodeToMp4 } from '../utils/FFMpeg';
+import { getFFMpeg, scaleVideo, transcodeToMp4 } from '../utils/ffmpeg';
+import FileDownload from './FileDownload';
 import { FileInfo } from './FileInfo';
 import FileInput, { FileInputRef } from './FileInput';
+import VideoCanvas, { VideoCanvasRef } from './VideoCanvas';
 
 export const Converter = () => {
   const fileRef = useRef<FileInputRef>(null);
   const [selectedFile, setSelectedFile] = useState<File[] | null>(null);
+  const [blob, setBlob] = useState<Blob>();
   const [status, setStatus] = useState('idle');
-  const playerRef = useRef<HTMLVideoElement>(null);
+  const videoCanvasRef = useRef<VideoCanvasRef | null>(null);
 
   useEffect(() => {
     getFFMpeg({
@@ -19,27 +22,25 @@ export const Converter = () => {
     });
   }, []);
 
+  const onSelectFile = (files: File[] | null) => {
+    setSelectedFile(files);
+    if (files && videoCanvasRef.current?.video) {
+      const url = URL.createObjectURL(files[0]);
+      videoCanvasRef.current.video.src = url;
+    }
+  };
+
   const handleTranscode = async () => {
     if (selectedFile) {
-      const player = playerRef.current;
-      if (player) {
-        const url = URL.createObjectURL(selectedFile[0]);
-        player.src = url;
-        setStatus('Transcoding...');
-        await transcodeToMp4(selectedFile[0]);
-      }
+      setStatus('Transcoding...');
+      setBlob(await transcodeToMp4(selectedFile[0]));
     }
   };
 
   const handleScale = async () => {
     if (selectedFile) {
-      const player = playerRef.current;
-      if (player) {
-        const url = URL.createObjectURL(selectedFile[0]);
-        player.src = url;
-        setStatus('Scaling...');
-        await scaleVideo(selectedFile[0]);
-      }
+      setStatus('Scaling...');
+      setBlob(await scaleVideo(selectedFile[0]));
     }
   };
 
@@ -48,16 +49,17 @@ export const Converter = () => {
   return (
     <Flex align='center' justifyContent='center' direction='column' gap={6}>
       {fileInfo}
-      <video width={840} height={680} id='player' controls ref={playerRef} />
+      <VideoCanvas ref={videoCanvasRef} width={840} height={460} />
       <Text>{status}</Text>
       <Flex align='center' justifyContent='center' gap={4}>
-        <FileInput ref={fileRef} onSelect={setSelectedFile} />
+        <FileInput ref={fileRef} onSelect={onSelectFile} />
         <Button disabled={selectedFile === null} onClick={handleTranscode}>
           Transcode
         </Button>
         <Button disabled={selectedFile === null} onClick={handleScale}>
           Scale
         </Button>
+        <FileDownload source={blob} />
       </Flex>
     </Flex>
   );
