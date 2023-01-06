@@ -8,6 +8,7 @@ import VideoCanvas, { VideoCanvasRef } from './VideoCanvas';
 
 export const Converter = () => {
   const fileRef = useRef<FileInputRef>(null);
+  const videoSrcRef = useRef<string>();
   const [selectedFile, setSelectedFile] = useState<File[] | null>(null);
   const [blob, setBlob] = useState<Blob>();
   const [status, setStatus] = useState('idle');
@@ -24,9 +25,8 @@ export const Converter = () => {
 
   const onSelectFile = (files: File[] | null) => {
     setSelectedFile(files);
-    if (files && videoCanvasRef.current?.video) {
-      const url = URL.createObjectURL(files[0]);
-      videoCanvasRef.current.video.src = url;
+    if (files) {
+      videoSrcRef.current = URL.createObjectURL(files[0]);
     }
   };
 
@@ -49,10 +49,17 @@ export const Converter = () => {
   return (
     <Flex align='center' justifyContent='center' direction='column' gap={6}>
       {fileInfo}
-      <VideoCanvas ref={videoCanvasRef} width={840} height={460} />
+      {videoSrcRef.current && (
+        <VideoCanvas
+          videoSrc={videoSrcRef.current}
+          ref={videoCanvasRef}
+          width={840}
+          height={460}
+        />
+      )}
       <Text>{status}</Text>
       <Flex align='center' justifyContent='center' gap={4}>
-        <FileInput ref={fileRef} onSelect={onSelectFile} />
+        <FileInput onSelect={onSelectFile} ref={fileRef} />
         <Button disabled={selectedFile === null} onClick={handleTranscode}>
           Transcode
         </Button>
