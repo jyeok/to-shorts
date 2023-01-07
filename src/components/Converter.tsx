@@ -50,12 +50,7 @@ export const Converter = () => {
     <Flex align='center' justifyContent='center' direction='column' gap={6}>
       {fileInfo}
       {videoSrcRef.current && (
-        <VideoCanvas
-          videoSrc={videoSrcRef.current}
-          ref={videoCanvasRef}
-          width={840}
-          height={460}
-        />
+        <VideoCanvas videoSrc={videoSrcRef.current} ref={videoCanvasRef} />
       )}
       <Text>{status}</Text>
       <Flex align='center' justifyContent='center' gap={4}>
