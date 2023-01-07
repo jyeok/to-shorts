@@ -8,7 +8,7 @@ import VideoCanvas from './VideoCanvas';
 
 export const Converter = () => {
   const videoSrcRef = useRef<string>();
-  const [selectedFile, setSelectedFile] = useState<File[] | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File[] | null>(null);
   const [blob, setBlob] = useState<Blob>();
   const [status, setStatus] = useState('idle');
 
@@ -21,28 +21,28 @@ export const Converter = () => {
     });
   }, []);
 
-  const onSelectFile = (files: File[] | null) => {
-    setSelectedFile(files);
+  const onSelectVideo = (files: File[] | null) => {
+    setSelectedVideo(files);
     if (files) {
       videoSrcRef.current = URL.createObjectURL(files[0]);
     }
   };
 
   const handleTranscode = async () => {
-    if (selectedFile) {
+    if (selectedVideo) {
       setStatus('Transcoding...');
-      setBlob(await transcodeToMp4(selectedFile[0]));
+      setBlob(await transcodeToMp4(selectedVideo[0]));
     }
   };
 
   const handleScale = async () => {
-    if (selectedFile) {
+    if (selectedVideo) {
       setStatus('Scaling...');
-      setBlob(await scaleVideo(selectedFile[0]));
+      setBlob(await scaleVideo(selectedVideo[0]));
     }
   };
 
-  const fileInfo = selectedFile ? <FileInfo file={selectedFile[0]} /> : null;
+  const fileInfo = selectedVideo ? <FileInfo file={selectedVideo[0]} /> : null;
 
   return (
     <Flex align='center' justifyContent='center' direction='column' gap={6}>
@@ -50,11 +50,11 @@ export const Converter = () => {
       {videoSrcRef.current && <VideoCanvas videoSrc={videoSrcRef.current} />}
       <Text>{status}</Text>
       <Flex align='center' justifyContent='center' gap={4}>
-        <FileInput onSelect={onSelectFile} />
-        <Button disabled={selectedFile === null} onClick={handleTranscode}>
+        <FileInput onSelect={onSelectVideo} />
+        <Button disabled={selectedVideo === null} onClick={handleTranscode}>
           Transcode
         </Button>
-        <Button disabled={selectedFile === null} onClick={handleScale}>
+        <Button disabled={selectedVideo === null} onClick={handleScale}>
           Scale
         </Button>
         <FileDownload source={blob} />
