@@ -1,15 +1,24 @@
 {
   "name": "to-shorts",
+  "author": {
+    "name": "jyeok"
+  },
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "0.0.1",
+  "main": "electron/electron.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src",
     "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx src --fix",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "electron": "wait-on tcp:5173 && cross-env IS_DEV=true electron .",
+    "electron:pack": "electron-builder --dir",
+    "electron:dev": "concurrently -k \"cross-env BROWSER=none yarn dev\" \"yarn electron\"",
+    "electron:builder": "electron-builder",
+    "build:for:electron": "vue-tsc --noEmit && cross-env ELECTRON=true vite build",
+    "app:build": "yarn build:for:electron && yarn electron:builder"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.3.7",
@@ -28,6 +37,11 @@
     "@typescript-eslint/eslint-plugin": "^5.42.1",
     "@typescript-eslint/parser": "^5.42.1",
     "@vitejs/plugin-react": "^2.2.0",
+    "concurrently": "^7.6.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.0.3",
+    "electron": "^22.0.0",
+    "electron-builder": "^23.6.0",
     "eslint": "^8.27.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-typescript": "^3.5.2",
@@ -39,6 +53,27 @@
     "prettier-plugin-organize-imports": "^3.2.1",
     "typescript": "^4.6.4",
     "vite": "^3.2.3",
-    "vite-plugin-cross-origin-isolation": "^0.1.6"
+    "vite-plugin-cross-origin-isolation": "^0.1.6",
+    "wait-on": "^7.0.1"
+  },
+  "build": {
+    "appId": "com.jyeok.to.shorts",
+    "productName": "to-shorts",
+    "copyright": "Copyright © 2022 jyeok",
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist_electron"
+    }
   }
 }
