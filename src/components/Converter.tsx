@@ -3,16 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import { getFFMpeg, scaleVideo, transcodeToMp4 } from '../utils/FFMpeg';
 import FileDownload from './FileDownload';
 import { FileInfo } from './FileInfo';
-import FileInput, { FileInputRef } from './FileInput';
-import VideoCanvas, { VideoCanvasRef } from './VideoCanvas';
+import FileInput from './FileInput';
+import VideoCanvas from './VideoCanvas';
 
 export const Converter = () => {
-  const fileRef = useRef<FileInputRef>(null);
   const videoSrcRef = useRef<string>();
   const [selectedFile, setSelectedFile] = useState<File[] | null>(null);
   const [blob, setBlob] = useState<Blob>();
   const [status, setStatus] = useState('idle');
-  const videoCanvasRef = useRef<VideoCanvasRef | null>(null);
 
   useEffect(() => {
     getFFMpeg({
@@ -49,12 +47,10 @@ export const Converter = () => {
   return (
     <Flex align='center' justifyContent='center' direction='column' gap={6}>
       {fileInfo}
-      {videoSrcRef.current && (
-        <VideoCanvas videoSrc={videoSrcRef.current} ref={videoCanvasRef} />
-      )}
+      {videoSrcRef.current && <VideoCanvas videoSrc={videoSrcRef.current} />}
       <Text>{status}</Text>
       <Flex align='center' justifyContent='center' gap={4}>
-        <FileInput onSelect={onSelectFile} ref={fileRef} />
+        <FileInput onSelect={onSelectFile} />
         <Button disabled={selectedFile === null} onClick={handleTranscode}>
           Transcode
         </Button>
