@@ -1,6 +1,6 @@
 import { Button, Flex, Text } from '@chakra-ui/react';
 import { useEffect, useRef, useState } from 'react';
-import { getFFMpeg, scaleVideo, transcodeToMp4 } from '../utils/ffmpeg';
+import { getFFMpeg, scaleVideo, transcodeToMp4 } from '../utils/FFMpeg';
 import FileDownload from './FileDownload';
 import { FileInfo } from './FileInfo';
 import FileInput, { FileInputRef } from './FileInput';
