@@ -1,5 +1,5 @@
 import { Button, Flex, Text } from '@chakra-ui/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getFFMpeg, scaleVideo, transcodeToMp4 } from '../utils/FFMpeg';
 import FileDownload from './FileDownload';
 import { FileInfo } from './FileInfo';
@@ -7,8 +7,9 @@ import FileInput from './FileInput';
 import VideoCanvas from './VideoCanvas';
 
 export const Converter = () => {
-  const videoSrcRef = useRef<string>();
   const [selectedVideo, setSelectedVideo] = useState<File[] | null>(null);
+  const [videoSrc, setVideoSrc] = useState<string>();
+  const [imageSrc, setImageSrc] = useState<string>();
   const [blob, setBlob] = useState<Blob>();
   const [status, setStatus] = useState('idle');
 
@@ -24,7 +25,14 @@ export const Converter = () => {
   const onSelectVideo = (files: File[] | null) => {
     setSelectedVideo(files);
     if (files) {
-      videoSrcRef.current = URL.createObjectURL(files[0]);
+      setVideoSrc(URL.createObjectURL(files[0]));
+    }
+  };
+
+  const handleSelectOverlay = (files: File[] | null) => {
+    const overlay = files?.[0];
+    if (overlay) {
+      setImageSrc(URL.createObjectURL(overlay));
     }
   };
 
@@ -47,10 +55,11 @@ export const Converter = () => {
   return (
     <Flex align='center' justifyContent='center' direction='column' gap={6}>
       {fileInfo}
-      {videoSrcRef.current && <VideoCanvas videoSrc={videoSrcRef.current} />}
+      {videoSrc && <VideoCanvas overlaySrc={imageSrc} videoSrc={videoSrc} />}
       <Text>{status}</Text>
       <Flex align='center' justifyContent='center' gap={4}>
         <FileInput onSelect={onSelectVideo} />
+        <FileInput onSelect={handleSelectOverlay} />
         <Button disabled={selectedVideo === null} onClick={handleTranscode}>
           Transcode
         </Button>

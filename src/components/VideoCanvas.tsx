@@ -2,7 +2,6 @@ import { Box, Button, Flex, HStack } from '@chakra-ui/react';
 import {
   forwardRef,
   ReactEventHandler,
-  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -11,6 +10,7 @@ import {
 
 interface VideoCanvasProps {
   videoSrc: string;
+  overlaySrc?: string;
 }
 
 export interface VideoCanvasRef {
@@ -19,34 +19,25 @@ export interface VideoCanvasRef {
 }
 
 export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
-  ({ videoSrc }, ref) => {
-    const [started, setStarted] = useState(false);
+  ({ videoSrc, overlaySrc }, ref) => {
+    const frameNumRef = useRef<number | null>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
-
-    const renderFrame = useCallback(
-      (canvas: HTMLCanvasElement, video: HTMLVideoElement) => {
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        if (started === true)
-          requestAnimationFrame(() => renderFrame(canvas, video));
-      },
-      [started],
-    );
+    const [overlayEl, setOverlayEl] = useState<HTMLImageElement | null>(null);
 
     useEffect(() => {
-      if (!started) return;
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-      if (!canvas || !video) return;
-
-      const num = requestAnimationFrame(() => renderFrame(canvas, video));
-
-      return () => cancelAnimationFrame(num);
-    }, [renderFrame, started]);
+      if (overlaySrc) {
+        const image = new Image();
+        image.src = overlaySrc;
+        image.onload = () => {
+          setOverlayEl(image);
+          if (canvasRef.current && videoRef.current)
+            renderFrame(canvasRef.current, videoRef.current, image);
+        };
+      } else {
+        setOverlayEl(null);
+      }
+    }, [overlaySrc]);
 
     useImperativeHandle(
       ref,
@@ -59,17 +50,21 @@ export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
 
     const handleVideoStart = () => {
       const video = videoRef.current;
-      if (!video) return;
+      const canvas = canvasRef.current;
+      if (!video || !canvas) return;
 
-      setStarted(true);
+      frameNumRef.current = requestAnimationFrame(() =>
+        renderFrame(canvas, video, overlayEl),
+      );
       video.play();
     };
 
     const handleVideoStop = () => {
       const video = videoRef.current;
       if (!video) return;
+      if (frameNumRef.current !== null)
+        cancelAnimationFrame(frameNumRef.current);
 
-      setStarted(false);
       video.pause();
     };
 
@@ -87,9 +82,7 @@ export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
 
       video.currentTime = 0.01;
       setTimeout(() => {
-        canvas
-          .getContext('2d')
-          ?.drawImage(video, 0, 0, canvas.width, canvas.height);
+        renderFrame(canvas, video, overlayEl);
         video.currentTime = 0;
       }, 100);
     };
@@ -117,3 +110,19 @@ export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
 VideoCanvas.displayName = 'VideoCanvas';
 
 export default VideoCanvas;
+
+const renderFrame = (
+  canvas: HTMLCanvasElement,
+  video: HTMLVideoElement,
+  overlay: HTMLImageElement | null,
+) => {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  if (overlay) {
+    ctx.drawImage(overlay, 0, 0, canvas.width / 2, canvas.height / 2);
+  }
+
+  requestAnimationFrame(() => renderFrame(canvas, video, overlay));
+};
