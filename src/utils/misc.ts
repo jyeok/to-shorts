@@ -1,3 +1,5 @@
+export const noop = () => {};
+
 export const getHumanReadableFileSize = (bytes: number, precision = 1) => {
   const THRESHOLD = 1000;
 

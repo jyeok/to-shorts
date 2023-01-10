@@ -1,5 +1,5 @@
 import { Button } from '@chakra-ui/react';
-import { BrowserFileSystem } from '../class/fs';
+import { BrowserFileSystem } from '../class/fs/fs';
 
 export interface FileDownloadProps {
   source?: FileSystemWriteChunkType;

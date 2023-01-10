@@ -1,6 +1,6 @@
 import { Button } from '@chakra-ui/react';
 import { ForwardedRef, forwardRef, useImperativeHandle, useRef } from 'react';
-import { BrowserFileSystem } from '../class/fs';
+import { BrowserFileSystem } from '../class/fs/fs';
 
 export interface FileInputProps {
   onSelect?: (files: File[] | null) => void;

@@ -1,10 +1,11 @@
 import { Button, Flex, Text } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getCanvasVideoRenderer } from '../class/renderer/renderer';
 import { getFFMpeg, scaleVideo, transcodeToMp4 } from '../utils/FFMpeg';
 import FileDownload from './FileDownload';
 import { FileInfo } from './FileInfo';
 import FileInput from './FileInput';
-import VideoCanvas from './VideoCanvas';
+import VideoCanvas, { VideoCanvasRef } from './VideoCanvas';
 
 export const Converter = () => {
   const [selectedVideo, setSelectedVideo] = useState<File[] | null>(null);
@@ -12,6 +13,8 @@ export const Converter = () => {
   const [imageSrc, setImageSrc] = useState<string>();
   const [blob, setBlob] = useState<Blob>();
   const [status, setStatus] = useState('idle');
+
+  const videoCanvasRef = useRef<VideoCanvasRef>(null);
 
   useEffect(() => {
     getFFMpeg({
@@ -55,7 +58,13 @@ export const Converter = () => {
   return (
     <Flex align='center' justifyContent='center' direction='column' gap={6}>
       {fileInfo}
-      {videoSrc && <VideoCanvas overlaySrc={imageSrc} videoSrc={videoSrc} />}
+      {videoSrc && (
+        <VideoCanvas
+          ref={videoCanvasRef}
+          overlaySrc={imageSrc}
+          videoSrc={videoSrc}
+        />
+      )}
       <Text>{status}</Text>
       <Flex align='center' justifyContent='center' gap={4}>
         <FileInput onSelect={onSelectVideo} />
@@ -66,8 +75,28 @@ export const Converter = () => {
         <Button disabled={selectedVideo === null} onClick={handleScale}>
           Scale
         </Button>
+        <Button
+          disabled={selectedVideo === null}
+          onClick={() => {
+            if (videoCanvasRef.current?.canvas && videoCanvasRef.current?.video)
+              handleRender(
+                videoCanvasRef.current.canvas,
+                videoCanvasRef.current.video,
+              );
+          }}
+        >
+          Render
+        </Button>
         <FileDownload source={blob} />
       </Flex>
     </Flex>
   );
+};
+
+const handleRender = (canvas: HTMLCanvasElement, video: HTMLVideoElement) => {
+  const renderer = getCanvasVideoRenderer(canvas, video, true);
+
+  if (renderer.status === 'processing') {
+    renderer.stop();
+  } else renderer.render();
 };
