@@ -2,6 +2,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'path';
 import icon from '../../resources/icon.png?asset';
+import { registerIPC } from './ipc/ipc';
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -47,6 +48,8 @@ app.whenReady().then(() => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+
+  registerIPC();
 });
 
 app.on('window-all-closed', () => {

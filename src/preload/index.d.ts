@@ -1,8 +1,10 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
-
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: unknown
+    electron: {
+      ping: (msg: string) => void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      runFFMpeg: (options: any, handlers: any) => void;
+    };
+    api: unknown;
   }
 }

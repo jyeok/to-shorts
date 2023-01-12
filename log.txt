@@ -1,0 +1,28 @@
+yarn run v1.22.19
+$ electron-vite dev
+vite v4.0.4 building for development...
+transforming...
+✓ 3 modules transformed.
+rendering chunks...
+out/main/index.js  1.80 kB
+
+build the electron main process successfully
+
+-----
+
+vite v4.0.4 building for development...
+transforming...
+✓ 1 modules transformed.
+rendering chunks...
+out/preload/index.js  0.24 kB
+
+build the electron preload files successfully
+
+-----
+
+dev server running for the electron renderer process at:
+
+  ➜  Local:   http://127.0.0.1:5173/
+  ➜  Network: use --host to expose
+
+start electron app...

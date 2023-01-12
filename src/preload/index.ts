@@ -1,22 +1,19 @@
-import { electronAPI } from '@electron-toolkit/preload';
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
+import * as IPCTypes from '../typing/ipc';
 
-// Custom APIs for renderer
-const api = {};
+const handler = <P>(ipc: IPCTypes.IPC, arg: P) => ipcRenderer.send(ipc, arg);
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', electronAPI);
-    contextBridge.exposeInMainWorld('api', api);
-  } catch (error) {
-    console.error(error);
-  }
-} else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI;
-  // @ts-ignore (define in dts)
-  window.api = api;
-}
+const pingHandler: IPCTypes.TPingAPI = (msg) => handler('PING', { msg });
+const ffmpegHandler: IPCTypes.TRunFFMpegAPI = (options) =>
+  handler('RUN_FFMPEG', {
+    options,
+  });
+
+export type IPCHandler = typeof pingHandler | typeof ffmpegHandler;
+
+const api: Record<IPCTypes.IPC, IPCHandler> = {
+  PING: pingHandler,
+  RUN_FFMPEG: ffmpegHandler,
+};
+
+contextBridge.exposeInMainWorld('electron', api);
