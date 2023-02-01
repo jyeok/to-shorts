@@ -58,13 +58,7 @@ export const Converter = () => {
   return (
     <Flex align='center' justifyContent='center' direction='column' gap={6}>
       {fileInfo}
-      {videoSrc && (
-        <VideoCanvas
-          ref={videoCanvasRef}
-          overlaySrc={imageSrc}
-          videoSrc={videoSrc}
-        />
-      )}
+      {videoSrc && <VideoCanvas ref={videoCanvasRef} overlaySrc={imageSrc} videoSrc={videoSrc} />}
       <Text>{status}</Text>
       <Flex align='center' justifyContent='center' gap={4}>
         <FileInput onSelect={onSelectVideo} />
@@ -79,10 +73,7 @@ export const Converter = () => {
           disabled={selectedVideo === null}
           onClick={() => {
             if (videoCanvasRef.current?.canvas && videoCanvasRef.current?.video)
-              handleRender(
-                videoCanvasRef.current.canvas,
-                videoCanvasRef.current.video,
-              );
+              handleRender(videoCanvasRef.current.canvas, videoCanvasRef.current.video);
           }}
         >
           Render

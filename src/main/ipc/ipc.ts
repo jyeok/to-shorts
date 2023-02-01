@@ -10,7 +10,6 @@ const handler =
       callback(args as Parameters<F>);
     });
 
-const pingHandler = handler<IPCTypes.TPingHandler>('PING', (arg) => console.log(arg.msg));
 const ffmpegHandler = handler<IPCTypes.TRunFFMpegHandler>('RUN_FFMPEG', (args) => {
   const { options } = args;
   const ffmpeg = getLocalFFMpeg();
@@ -22,10 +21,22 @@ const ffmpegHandler = handler<IPCTypes.TRunFFMpegHandler>('RUN_FFMPEG', (args) =
   });
 });
 
+const ffmpegPushHandler = handler<IPCTypes.TPushFFMpegHandler>('PUSH_FFMPEG', (args) => {
+  const { buffer } = args;
+  const ffmpeg = getLocalFFMpeg();
+  ffmpeg.push(Buffer.from(buffer));
+});
+
+const ffmpegEndHandler = handler<IPCTypes.TEndFFMpegHandler>('END_FFMPEG', () => {
+  const ffmpeg = getLocalFFMpeg();
+  ffmpeg.end();
+});
+
 export const registerIPC = () => {
-  const handlerRegisterers = {
-    PING: pingHandler,
+  const handlerRegisterers: Record<IPCTypes.IPC, () => void> = {
     RUN_FFMPEG: ffmpegHandler,
+    PUSH_FFMPEG: ffmpegPushHandler,
+    END_FFMPEG: ffmpegEndHandler,
   } as const;
 
   Object.values(handlerRegisterers).forEach((each) => each());

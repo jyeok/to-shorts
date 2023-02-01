@@ -53,17 +53,14 @@ export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
       const canvas = canvasRef.current;
       if (!video || !canvas) return;
 
-      frameNumRef.current = requestAnimationFrame(() =>
-        renderFrame(canvas, video, overlayEl),
-      );
+      frameNumRef.current = requestAnimationFrame(() => renderFrame(canvas, video, overlayEl));
       video.play();
     };
 
     const handleVideoStop = () => {
       const video = videoRef.current;
       if (!video) return;
-      if (frameNumRef.current !== null)
-        cancelAnimationFrame(frameNumRef.current);
+      if (frameNumRef.current !== null) cancelAnimationFrame(frameNumRef.current);
 
       video.pause();
     };
@@ -73,9 +70,7 @@ export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
       const video = videoRef.current;
 
       if (!canvas || !video) return;
-      const ratio = video.videoHeight
-        ? video.videoWidth / video.videoHeight
-        : 0;
+      const ratio = video.videoHeight ? video.videoWidth / video.videoHeight : 0;
 
       canvas.height = Math.min(400, video.videoHeight);
       canvas.width = ratio * canvas.height;

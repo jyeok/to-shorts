@@ -1,4 +1,5 @@
-import ffmpeg from 'fluent-ffmpeg';
+import { ChildProcess, spawn } from 'child_process';
+import builder from 'fluent-ffmpeg';
 import { homedir } from 'os';
 
 export interface ILocalFFMpegBuildOptions {
@@ -14,32 +15,83 @@ export interface ILocalFFMpegBuildHandlers {
 }
 
 class LocalFFMpeg {
-  private ffmpeg = ffmpeg();
+  private ffmpeg: ChildProcess | null = null;
+  private handlers: ILocalFFMpegBuildHandlers | null = null;
+  private builder = builder();
+  private command = '';
   private outputPath = homedir();
+  private cnt = 0;
 
   public build = (options: ILocalFFMpegBuildOptions, handlers: ILocalFFMpegBuildHandlers) => {
-    this.ffmpeg = ffmpeg()
+    this.builder = builder()
       .input('-')
-      .inputOption(['-pix_fmt argb'])
+      .inputOption(['-pix_fmt rgba', `-video_size ${options.width}x${options.height}`])
       .inputFormat('rawvideo')
       .fps(options.fps)
-      .size(`${options.width}x${options.height}`)
-      .videoCodec('libx264')
-      .output(`${this.outputPath}/output.mp4`)
-      .on('progress', handlers.onProgress)
-      .on('stderr', handlers.onError)
-      .on('error', handlers.onFail)
-      .on('end', handlers.onEnd);
+      .videoCodec('h264_videotoolbox')
+      .output(`${this.outputPath}/output.mp4`);
 
-    console.log(this.ffmpeg._getArguments().join(' '));
+    this.handlers = handlers;
+    this.command = this.builder._getArguments().join(' ');
+    console.log(this.command);
+
+    this.run();
   };
 
-  public run = () => {
-    this.ffmpeg.run();
+  private run = () => {
+    const ffmpeg = spawn('ffmpeg ' + this.command, {
+      env: process.env,
+      shell: true,
+    });
+    ffmpeg.stdout
+      .on('data', (data) => console.log(data.toString()))
+      .on('error', (err) => console.log(err));
+
+    ffmpeg.stderr.on('data', (data) => console.log(data.toString()));
+
+    this.ffmpeg = ffmpeg;
+
+    if (this.handlers) {
+      ffmpeg.on('close', this.handlers.onEnd);
+      ffmpeg.on('error', this.handlers.onError);
+    }
+  };
+
+  public end = async () => {
+    if (!this.ffmpeg) {
+      console.log('No ffmpeg process to end');
+      return;
+    }
+
+    // sleep 5 seconds.
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    this.ffmpeg.stdin?.end();
+    console.log(`pushed ${this.cnt}`);
   };
 
   public kill = () => {
-    this.ffmpeg.kill('SIGKILL');
+    if (!this.ffmpeg) {
+      console.log('No ffmpeg process to kill');
+      return false;
+    }
+
+    this.ffmpeg.kill('SIGINT');
+    return true;
+  };
+
+  public push = (buffer: Buffer) => {
+    if (!this.ffmpeg) {
+      console.log('no ffmpeg process to push to');
+      return;
+    }
+
+    if (!this.ffmpeg.stdin) {
+      console.log('no stdin to push to');
+      return;
+    }
+
+    this.cnt++;
+    this.ffmpeg.stdin.write(buffer);
   };
 }
 

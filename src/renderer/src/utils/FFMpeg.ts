@@ -1,9 +1,4 @@
-import {
-  createFFmpeg,
-  CreateFFmpegOptions,
-  fetchFile,
-  FFmpeg,
-} from '@ffmpeg/ffmpeg';
+import { createFFmpeg, CreateFFmpegOptions, fetchFile, FFmpeg } from '@ffmpeg/ffmpeg';
 
 export const scaleVideo = async (file: File) => {
   const ffmpeg = await getFFMpeg();
