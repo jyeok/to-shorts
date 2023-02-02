@@ -54,7 +54,7 @@ export abstract class IRenderer {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public abstract init(...args: any): void;
-  public abstract render(): void;
+  public abstract render(onProgress: (frameNum: number) => void): void;
   public abstract stop(): void;
   public abstract clear(): void;
 }
@@ -62,6 +62,7 @@ export abstract class IRenderer {
 export class CanvasVideoRenderer extends IRenderer {
   private canvas: HTMLCanvasElement | undefined;
   private video: HTMLVideoElement | undefined;
+  private overlayElements: HTMLImageElement[] = [];
   private videoInfo: MediaVideoInfo | undefined;
   private buffers: Uint8ClampedArray[] = [];
   private cnt = 0;
@@ -69,6 +70,7 @@ export class CanvasVideoRenderer extends IRenderer {
   constructor(
     canvas: HTMLCanvasElement,
     video: HTMLVideoElement,
+    overlaySrc: string[],
     verbose = false,
     logger: TLogger = console.log,
   ) {
@@ -76,6 +78,11 @@ export class CanvasVideoRenderer extends IRenderer {
     this.canvas = canvas;
     this.video = video;
     this.videoInfo = new VideoProbe(video).mediaInfo;
+    this.overlayElements = overlaySrc.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
     getIPC().RUN_FFMPEG({
       fps: 30,
       width: this.canvas.width,
@@ -97,7 +104,7 @@ export class CanvasVideoRenderer extends IRenderer {
     this.cnt = 0;
   };
 
-  public render = (): void => {
+  public render = (onProgress: (frameNum: number, timeMS: number) => void): void => {
     if (!this.canvas || !this.video || !this.videoInfo) {
       this.status = 'error';
       this.log('Canvas or video is not available');
@@ -122,11 +129,19 @@ export class CanvasVideoRenderer extends IRenderer {
         );
       }
 
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+      this.overlayElements.forEach((element) => {
+        const drawWidth = element.naturalWidth * Math.random();
+        const drawHeight = drawWidth * (element.naturalHeight / element.naturalWidth);
+        ctx.drawImage(element, 0, 0, drawWidth, drawHeight);
+      });
+
       const frame = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
-      this.pushData(frame.data);
-      this.sendData(false);
+      getIPC().PUSH_FFMPEG(frame.data);
+      // this.pushData(frame.data);
+      // this.sendData(false, onProgress);
       this.timer.measure(frame.data, noop);
       this.seekVideo();
     };
@@ -141,7 +156,7 @@ export class CanvasVideoRenderer extends IRenderer {
 
   public stop = (): void => {
     if (!this.video) return;
-    this.sendData(true);
+    this.sendData(true, () => {});
     getIPC().END_FFMPEG();
     console.log(`total frames: ${this.cnt}`);
 
@@ -185,21 +200,23 @@ export class CanvasVideoRenderer extends IRenderer {
     this.buffers.push(data);
   };
 
-  private sendData = (force: boolean) => {
+  private sendData = (force: boolean, onProgress: (frameNum: number, timeMS: number) => void) => {
+    const BATCH_FRAME_SIZE = 15;
     if (this.buffers.length === 0) return;
-    if (this.buffers.length < 10 && !force) return;
+    if (this.buffers.length < BATCH_FRAME_SIZE && !force) return;
 
     const concatenated = new Uint8ClampedArray(
-      this.buffers[0].length * Math.min(10, this.buffers.length),
+      this.buffers[0].length * Math.min(BATCH_FRAME_SIZE, this.buffers.length),
     );
 
-    for (let cnt = 0; cnt < 10; cnt++) {
+    this.cnt += Math.min(BATCH_FRAME_SIZE, this.buffers.length);
+    onProgress(this.cnt, this.timer.lap());
+    for (let cnt = 0; cnt < BATCH_FRAME_SIZE; cnt++) {
       const target = this.buffers.shift();
       if (!target) break;
       concatenated.set(target, cnt * target.length);
     }
 
-    this.cnt++;
     getIPC().PUSH_FFMPEG(concatenated.buffer);
   };
 }
@@ -208,7 +225,12 @@ let canvasVideoRenderer: CanvasVideoRenderer | null = null;
 export const getCanvasVideoRenderer = (
   ...args: ConstructorParameters<typeof CanvasVideoRenderer>
 ) => {
-  if (canvasVideoRenderer === null) {
+  if (
+    canvasVideoRenderer === null ||
+    canvasVideoRenderer.status === 'done' ||
+    canvasVideoRenderer.status === 'error' ||
+    canvasVideoRenderer.status === 'not_initialized'
+  ) {
     canvasVideoRenderer = new CanvasVideoRenderer(...args);
   }
 

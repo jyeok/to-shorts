@@ -21,9 +21,7 @@ export class Timer {
     const timeMS = endTime - this.startTime;
 
     this.logger(
-      `ended after ${Timer.hhmmss(
-        timeMS / 1000,
-      )}, throughput: ${Timer.toHumanReadableSize(
+      `ended after ${Timer.hhmmss(timeMS / 1000)}, throughput: ${Timer.toHumanReadableSize(
         (this.count * 1000) / timeMS,
       )}/s`,
     );
@@ -43,12 +41,18 @@ export class Timer {
 
     if (
       this.verbose &&
-      Math.floor(prevCnt / (1024 * 1024 * 10)) !==
-        Math.floor(this.count / (1024 * 1024 * 10))
+      Math.floor(prevCnt / (1024 * 1024 * 10)) !== Math.floor(this.count / (1024 * 1024 * 10))
     )
       this.logger(`processed ${Timer.toHumanReadableSize(this.count)} bytes`);
 
     return result;
+  };
+
+  public lap = () => {
+    const endTime = this.performance.now();
+    const timeMS = endTime - this.startTime;
+
+    return timeMS;
   };
 
   private static toHumanReadableSize(bytes: number, precision = 2): string {
@@ -66,10 +70,7 @@ export class Timer {
     do {
       bytes /= THRESHOLD;
       ++u;
-    } while (
-      Math.round(Math.abs(bytes) * r) / r >= THRESHOLD &&
-      u < units.length - 1
-    );
+    } while (Math.round(Math.abs(bytes) * r) / r >= THRESHOLD && u < units.length - 1);
 
     return bytes.toFixed(precision) + ' ' + units[u];
   }

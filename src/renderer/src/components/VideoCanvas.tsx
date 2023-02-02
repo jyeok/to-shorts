@@ -10,7 +10,7 @@ import {
 
 interface VideoCanvasProps {
   videoSrc: string;
-  overlaySrc?: string;
+  overlaySrc: string[];
 }
 
 export interface VideoCanvasRef {
@@ -23,20 +23,19 @@ export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
     const frameNumRef = useRef<number | null>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [overlayEl, setOverlayEl] = useState<HTMLImageElement | null>(null);
+    const [overlayEl, setOverlayEl] = useState<HTMLImageElement[]>([]);
 
     useEffect(() => {
-      if (overlaySrc) {
-        const image = new Image();
-        image.src = overlaySrc;
-        image.onload = () => {
-          setOverlayEl(image);
-          if (canvasRef.current && videoRef.current)
-            renderFrame(canvasRef.current, videoRef.current, image);
-        };
-      } else {
-        setOverlayEl(null);
-      }
+      Promise.all(
+        overlaySrc.map(
+          (src) =>
+            new Promise<HTMLImageElement>((resolve) => {
+              const img = new Image();
+              img.src = src;
+              img.onload = () => resolve(img);
+            }),
+        ),
+      ).then((imgs) => setOverlayEl(imgs));
     }, [overlaySrc]);
 
     useImperativeHandle(
@@ -48,21 +47,39 @@ export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
       [],
     );
 
+    const renderFrame = () => {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const ctx = canvas?.getContext('2d');
+
+      if (!canvas || !ctx || !video) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      overlayEl.forEach((each) =>
+        ctx.drawImage(each, Math.random() * canvas.width, Math.random() * canvas.height),
+      );
+
+      frameNumRef.current = requestAnimationFrame(() => renderFrame());
+    };
+
     const handleVideoStart = () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas) return;
 
-      frameNumRef.current = requestAnimationFrame(() => renderFrame(canvas, video, overlayEl));
+      video.onplay = () => {
+        frameNumRef.current = requestAnimationFrame(() => renderFrame());
+      };
       video.play();
     };
 
     const handleVideoStop = () => {
       const video = videoRef.current;
       if (!video) return;
-      if (frameNumRef.current !== null) cancelAnimationFrame(frameNumRef.current);
-
       video.pause();
+      video.onplay = null;
+      if (frameNumRef.current !== null) cancelAnimationFrame(frameNumRef.current);
     };
 
     const onVideoLoaded: ReactEventHandler<HTMLVideoElement> = () => {
@@ -70,14 +87,15 @@ export const VideoCanvas = forwardRef<VideoCanvasRef, VideoCanvasProps>(
       const video = videoRef.current;
 
       if (!canvas || !video) return;
-      const ratio = video.videoHeight ? video.videoWidth / video.videoHeight : 0;
 
-      canvas.height = Math.min(400, video.videoHeight);
-      canvas.width = ratio * canvas.height;
+      canvas.height = video.videoHeight * window.devicePixelRatio;
+      canvas.width = video.videoWidth * window.devicePixelRatio;
+      canvas.style.width = `${video.videoWidth}px`;
+      canvas.style.height = `${video.videoHeight}px`;
 
       video.currentTime = 0.01;
       setTimeout(() => {
-        renderFrame(canvas, video, overlayEl);
+        renderSingleFrame(canvas, video, overlayEl);
         video.currentTime = 0;
       }, 100);
     };
@@ -106,18 +124,16 @@ VideoCanvas.displayName = 'VideoCanvas';
 
 export default VideoCanvas;
 
-const renderFrame = (
+const renderSingleFrame = (
   canvas: HTMLCanvasElement,
   video: HTMLVideoElement,
-  overlay: HTMLImageElement | null,
+  overlayEl: HTMLImageElement[],
 ) => {
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas?.getContext('2d');
   if (!ctx) return;
 
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  if (overlay) {
-    ctx.drawImage(overlay, 0, 0, canvas.width / 2, canvas.height / 2);
-  }
-
-  requestAnimationFrame(() => renderFrame(canvas, video, overlay));
+  ctx.drawImage(video, 0, 0, canvas.width / 2, canvas.height / 2);
+  overlayEl.forEach((each) =>
+    ctx.drawImage(each, (Math.random() * canvas.width) / 2, (Math.random() * canvas.height) / 2),
+  );
 };

@@ -3,6 +3,7 @@ import { ForwardedRef, forwardRef, useImperativeHandle, useRef } from 'react';
 import { BrowserFileSystem } from '../class/fs/fs';
 
 export interface FileInputProps {
+  label: string;
   onSelect?: (files: File[] | null) => void;
   option?: OpenFilePickerOptions;
 }
@@ -11,24 +12,20 @@ export interface FileInputRef {
   fs: BrowserFileSystem;
 }
 
-export const FileInput = forwardRef<FileInputRef, FileInputProps>(
-  (props, ref) => {
-    const fs = useFile(ref);
+export const FileInput = forwardRef<FileInputRef, FileInputProps>((props, ref) => {
+  const fs = useFile(ref);
 
-    const handleOpen = async () => {
-      const fileHandles = await fs.open(props.option);
+  const handleOpen = async () => {
+    const fileHandles = await fs.open(props.option);
 
-      if (fileHandles) {
-        const files = await Promise.all(
-          fileHandles.map((fileHandle) => fileHandle.getFile()),
-        );
-        props.onSelect?.(files);
-      }
-    };
+    if (fileHandles) {
+      const files = await Promise.all(fileHandles.map((fileHandle) => fileHandle.getFile()));
+      props.onSelect?.(files);
+    }
+  };
 
-    return <Button onClick={handleOpen}>Select File</Button>;
-  },
-);
+  return <Button onClick={handleOpen}>{props.label}</Button>;
+});
 
 const useFile = (ref: ForwardedRef<FileInputRef>) => {
   const fsRef = useRef(new BrowserFileSystem());
